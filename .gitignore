@@ -1,0 +1,15 @@
+# Hasil build
+build/
+gudang
+*.exe
+*.o
+*.out
+
+# Pengaturan editor
+.vscode/
+.idea/
+*.user
+
+# File sistem
+.DS_Store
+Thumbs.db
