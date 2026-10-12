@@ -1,5 +1,7 @@
 #pragma once
+#include <QComboBox>
 #include <QLabel>
+#include <QLineEdit>
 #include <QListWidget>
 #include <QMainWindow>
 #include <QSpinBox>
@@ -21,6 +23,8 @@ private:
     QLabel* labelRingkasan;
     QListWidget* daftarRiwayat;
     QSpinBox* inputBatas;
+    QLineEdit* inputCari;
+    QComboBox* comboJenis;
 
     void tampilkanBarang(const std::vector<const Barang*>& daftar);
     void perbaruiTampilan();
@@ -30,4 +34,7 @@ private:
     void tambahBarang();
     void barangMasuk();
     void barangKeluar();
+    void hapusBarang();
+    void cariBarangNama();
+    void filterBerdasarkanJenis();
 };

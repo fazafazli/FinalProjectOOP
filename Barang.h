@@ -71,3 +71,16 @@ public:
     std::string getKeterangan() const override;
     double hitungBiayaPenyimpanan() const override;
 };
+
+class BarangPecahBelah : public Barang {
+private:
+    double biayaPengamanan;
+
+public:
+    BarangPecahBelah(std::string kodeBarang, std::string namaBarang, double hargaBarang,
+                     int stokAwal, double biayaProteksi);
+
+    std::string getJenis() const override;
+    std::string getKeterangan() const override;
+    double hitungBiayaPenyimpanan() const override;
+};

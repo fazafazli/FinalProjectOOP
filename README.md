@@ -8,9 +8,9 @@ Anggota:
 
 ## Deskripsi
 
-Program C++ untuk mencatat stok barang di gudang minimarket. Ada tiga jenis barang, yaitu
-umum, makanan, dan elektronik. Setiap jenis punya aturan sendiri, misalnya makanan tidak
-boleh dijual setelah tanggal kedaluwarsa. Program juga menjaga agar stok tidak pernah
+Program C++ untuk mencatat stok barang di gudang minimarket. Ada empat jenis barang, yaitu
+umum, makanan, elektronik, dan pecah belah. Setiap jenis punya aturan sendiri, misalnya makanan tidak
+boleh dijual setelah tanggal kedaluwarsa dan pecah belah memerlukan biaya proteksi penanganan. Program juga menjaga agar stok tidak pernah
 negatif dan mencatat riwayat barang masuk dan keluar.
 
 Program tersedia dalam dua tampilan, yaitu console dan GUI (Qt). Keduanya memakai class
@@ -20,10 +20,13 @@ Program tersedia dalam dua tampilan, yaitu console dan GUI (Qt). Keduanya memaka
 
 1. Lihat semua barang beserta total nilai stok dan biaya simpan per bulan
 2. Lihat barang dengan stok di bawah batas tertentu
-3. Tambah barang baru
+3. Tambah barang baru (Umum, Makanan, Elektronik, Pecah Belah)
 4. Barang masuk
 5. Barang keluar
 6. Riwayat barang masuk dan keluar
+7. Cari barang berdasarkan nama
+8. Filter barang berdasarkan jenis
+9. Hapus barang (dengan validasi stok harus nol)
 
 ## Cara menjalankan
 
@@ -53,7 +56,7 @@ cmake --build build
 
 ### Data contoh
 
-Program sudah berisi 7 barang contoh dengan tanggal hari ini 02-10-2026. Contoh tampilan
+Program sudah berisi 8 barang contoh dengan tanggal hari ini 02-10-2026. Contoh tampilan
 menu 1 di versi console:
 
 ```
@@ -77,17 +80,19 @@ UM-001  Sabun Cuci Piring 800 ml  Umum           Rp14.500    30     Rp6.000
         Kategori: Kebersihan
 UM-002  Buku Tulis 67 lembar      Umum            Rp4.000     8     Rp1.600
         Kategori: Alat Tulis
+PB-001  Piring Keramik 6 Pcs      Pecah Belah    Rp65.000    15    Rp18.750
+        Proteksi: Rp1.000/unit
 ---------------------------------------------------------------------------
-Jumlah barang      : 7
-Total nilai stok   : Rp4.452.000
-Biaya simpan/bulan : Rp58.650
+Jumlah barang      : 8
+Total nilai stok   : Rp5.427.000
+Biaya simpan/bulan : Rp77.400
 ```
 
 ## Struktur file
 
 | File | Isi |
 |---|---|
-| `Barang.h`, `Barang.cpp` | Class `Barang` dan ketiga turunannya |
+| `Barang.h`, `Barang.cpp` | Class `Barang` dan keempat turunannya |
 | `Gudang.h`, `Gudang.cpp` | Class `Gudang` |
 | `DataAwal.h` | Data contoh, dipakai versi console dan GUI |
 | `Utilitas.h` | Fungsi bantu format rupiah dan tanggal |
@@ -104,6 +109,7 @@ Biaya simpan/bulan : Rp58.650
 | `BarangUmum` | Punya kategori | stok x Rp200 | selalu |
 | `BarangMakanan` | Punya tanggal kedaluwarsa | stok x Rp300 | sampai tanggal kedaluwarsa |
 | `BarangElektronik` | Punya garansi | stok x harga x 1% | selalu |
+| `BarangPecahBelah` | Punya biaya proteksi penanganan | stok x (Rp250 + proteksi) | selalu |
 
 `Gudang` menyimpan semua barang dalam `vector<Barang*>` beserta riwayat barang masuk dan
 keluar. Semua objek barang dihapus oleh destructor `Gudang`. `Gudang` tidak mencetak apa
@@ -114,7 +120,7 @@ pun. Hasil setiap operasi dikembalikan sebagai pesan, lalu ditampilkan oleh `mai
 
 ### Class dan object
 
-`Barang`, ketiga turunannya, `Gudang`, dan `JendelaUtama` adalah class. Object-nya dibuat
+`Barang`, keempat turunannya, `Gudang`, dan `JendelaUtama` adalah class. Object-nya dibuat
 misalnya lewat `Gudang gudang(...)` dan `new BarangMakanan(...)`.
 
 ### Encapsulation
@@ -144,7 +150,7 @@ mencari barang, mengecek aturan, dan mencatat riwayat.
 
 ### Inheritance
 
-`BarangUmum`, `BarangMakanan`, dan `BarangElektronik` mewarisi data, getter, dan aturan
+`BarangUmum`, `BarangMakanan`, `BarangElektronik`, dan `BarangPecahBelah` mewarisi data, getter, dan aturan
 stok dari `Barang`. Constructor turunan memanggil constructor `Barang`. Di versi GUI,
 `JendelaUtama` adalah turunan dari `QMainWindow` milik Qt.
 
@@ -154,8 +160,10 @@ stok dari `Barang`. Constructor turunan memanggil constructor `Barang`. Di versi
   di setiap turunan, sedangkan `layakDijual()` hanya diganti oleh `BarangMakanan`. Saat
   daftar barang ditampilkan, satu loop pada daftar `Barang*` otomatis memanggil versi milik
   jenis barangnya masing-masing.
-- Overloading: `getDaftarBarang()` untuk semua barang dan `getDaftarBarang(int batasStok)`
-  untuk barang dengan stok di bawah batas.
+- Overloading: Tiga variasi method `getDaftarBarang()` pada `Gudang`:
+  1. `getDaftarBarang()` untuk semua barang.
+  2. `getDaftarBarang(int batasStok)` untuk barang dengan stok di bawah batas.
+  3. `getDaftarBarang(std::string jenisTertentu)` untuk filter jenis barang.
 
 ## Skenario demo (console)
 
@@ -164,7 +172,7 @@ dilakukan di versi GUI.
 
 | No | Menu | Input | Hasil | Konsep |
 |---|---|---|---|---|
-| 1 | 1 | - | Tiga jenis barang tampil dalam satu tabel, yoghurt tertulis tidak layak dijual | Polymorphism |
+| 1 | 1 | - | Empat jenis barang tampil dalam satu tabel, yoghurt tertulis tidak layak dijual | Polymorphism |
 | 2 | 2 | `10` | Hanya EL-001 dan UM-002 yang tampil | Overloading |
 | 3 | 5 | `MK-003`, `5` | Ditolak karena yoghurt sudah kedaluwarsa | Polymorphism |
 | 4 | 5 | `MK-001`, `50` | Ditolak karena stok hanya 40 | Encapsulation |
@@ -173,3 +181,14 @@ dilakukan di versi GUI.
 | 7 | 4 | `UM-002`, `30` | Berhasil, stok menjadi 38 | Abstraction |
 | 8 | 6 | - | Dua transaksi di atas tercatat | Abstraction |
 | 9 | 3 | `2`, `MK-004`, `Keju Cheddar 165 g`, `28000`, `15`, `20270115` | Barang baru ikut tampil di menu 1 | Class dan object, Inheritance |
+| 10 | 3 | `4`, `PB-002`, `Gelas Kaca Kristal`, `25000`, `20`, `500` | Barang baru jenis Pecah Belah dengan proteksi ikut tampil di menu 1 | Class dan object, Inheritance, Polymorphism |
+| 11 | 7 | `susu` | Menampilkan barang dengan nama Susu UHT 1 L | Abstraction |
+| 12 | 8 | `4` | Menampilkan hanya barang Pecah Belah | Overloading |
+| 13 | 9 | `MK-001` | Ditolak karena stok masih 40 (harus kosong) | Encapsulation |
+
+## Pembagian Kerja
+
+| Anggota | Tanggung Jawab Utama | Kontribusi Tambahan |
+|---|---|---|
+| **Muhammad Fazli** (25/560578/TK/63319) | Desain arsitektur dasar class & UML, implementasi awal `Barang` dan `Gudang`, modul Console & GUI dasar | Dokumentasi teknis dasar |
+| **Naufal Arkana Maulana** (25/564430/TK/63669) | Perluasan hierarki OOP: class `BarangPecahBelah` (Inheritance & Polymorphism); implementasi fitur `cariBarangNama()`, overloading `getDaftarBarang(string)` untuk filter jenis, dan `hapusBarang()` dengan validasi stok di `Gudang`, Console, dan GUI Qt | Skenario pengujian sistem, penyusunan materi slide presentasi (PPT) & skrip video demo |

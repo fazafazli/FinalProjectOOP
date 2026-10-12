@@ -38,21 +38,40 @@ JendelaUtama::JendelaUtama(QWidget* parent)
     QPushButton* tombolTambah = new QPushButton("Tambah Barang");
     QPushButton* tombolMasuk = new QPushButton("Barang Masuk");
     QPushButton* tombolKeluar = new QPushButton("Barang Keluar");
+    QPushButton* tombolHapus = new QPushButton("Hapus Barang");
+
+    inputCari = new QLineEdit();
+    inputCari->setPlaceholderText("Cari nama barang...");
+    QPushButton* tombolCari = new QPushButton("Cari");
+
+    comboJenis = new QComboBox();
+    comboJenis->addItems({"Semua", "Umum", "Makanan", "Elektronik", "Pecah Belah"});
+
     QPushButton* tombolFilter = new QPushButton("Tampilkan");
     QPushButton* tombolSemua = new QPushButton("Semua Barang");
     inputBatas = new QSpinBox();
     inputBatas->setRange(0, 100000);
     inputBatas->setValue(10);
 
-    QHBoxLayout* barisTombol = new QHBoxLayout();
-    barisTombol->addWidget(tombolTambah);
-    barisTombol->addWidget(tombolMasuk);
-    barisTombol->addWidget(tombolKeluar);
-    barisTombol->addStretch();
-    barisTombol->addWidget(new QLabel("Stok di bawah:"));
-    barisTombol->addWidget(inputBatas);
-    barisTombol->addWidget(tombolFilter);
-    barisTombol->addWidget(tombolSemua);
+    QHBoxLayout* barisAksi = new QHBoxLayout();
+    barisAksi->addWidget(tombolTambah);
+    barisAksi->addWidget(tombolMasuk);
+    barisAksi->addWidget(tombolKeluar);
+    barisAksi->addWidget(tombolHapus);
+    barisAksi->addStretch();
+
+    QHBoxLayout* barisFilter = new QHBoxLayout();
+    barisFilter->addWidget(new QLabel("Cari:"));
+    barisFilter->addWidget(inputCari);
+    barisFilter->addWidget(tombolCari);
+    barisFilter->addSpacing(10);
+    barisFilter->addWidget(new QLabel("Jenis:"));
+    barisFilter->addWidget(comboJenis);
+    barisFilter->addSpacing(10);
+    barisFilter->addWidget(new QLabel("Stok di bawah:"));
+    barisFilter->addWidget(inputBatas);
+    barisFilter->addWidget(tombolFilter);
+    barisFilter->addWidget(tombolSemua);
 
     tabel = new QTableWidget(0, 8);
     tabel->setHorizontalHeaderLabels({"Kode", "Nama Barang", "Jenis", "Harga", "Stok",
@@ -71,7 +90,8 @@ JendelaUtama::JendelaUtama(QWidget* parent)
 
     QVBoxLayout* susunan = new QVBoxLayout();
     susunan->addWidget(labelJudul);
-    susunan->addLayout(barisTombol);
+    susunan->addLayout(barisAksi);
+    susunan->addLayout(barisFilter);
     susunan->addWidget(tabel);
     susunan->addWidget(labelRingkasan);
     susunan->addWidget(new QLabel("Riwayat barang masuk dan keluar:"));
@@ -84,6 +104,10 @@ JendelaUtama::JendelaUtama(QWidget* parent)
     connect(tombolTambah, &QPushButton::clicked, this, &JendelaUtama::tambahBarang);
     connect(tombolMasuk, &QPushButton::clicked, this, &JendelaUtama::barangMasuk);
     connect(tombolKeluar, &QPushButton::clicked, this, &JendelaUtama::barangKeluar);
+    connect(tombolHapus, &QPushButton::clicked, this, &JendelaUtama::hapusBarang);
+    connect(tombolCari, &QPushButton::clicked, this, &JendelaUtama::cariBarangNama);
+    connect(inputCari, &QLineEdit::returnPressed, this, &JendelaUtama::cariBarangNama);
+    connect(comboJenis, &QComboBox::currentIndexChanged, this, &JendelaUtama::filterBerdasarkanJenis);
     connect(tombolFilter, &QPushButton::clicked, this, &JendelaUtama::tampilkanStokSedikit);
     connect(tombolSemua, &QPushButton::clicked, this, &JendelaUtama::perbaruiTampilan);
 
@@ -174,7 +198,7 @@ void JendelaUtama::barangKeluar() {
 void JendelaUtama::tambahBarang() {
     bool ok;
     QString jenis = QInputDialog::getItem(this, "Tambah Barang", "Jenis barang:",
-                                          {"Umum", "Makanan", "Elektronik"}, 0, false, &ok);
+                                          {"Umum", "Makanan", "Elektronik", "Pecah Belah"}, 0, false, &ok);
     if (!ok) {
         return;
     }
@@ -203,6 +227,7 @@ void JendelaUtama::tambahBarang() {
     QLineEdit* inputKategori = nullptr;
     QDateEdit* inputKedaluwarsa = nullptr;
     QSpinBox* inputGaransi = nullptr;
+    QSpinBox* inputProteksi = nullptr;
     if (jenis == "Umum") {
         inputKategori = new QLineEdit();
         inputKategori->setMaxLength(20);
@@ -213,11 +238,17 @@ void JendelaUtama::tambahBarang() {
         inputKedaluwarsa->setDisplayFormat("dd-MM-yyyy");
         inputKedaluwarsa->setCalendarPopup(true);
         form->addRow("Kedaluwarsa", inputKedaluwarsa);
-    } else {
+    } else if (jenis == "Elektronik") {
         inputGaransi = new QSpinBox();
         inputGaransi->setRange(0, 120);
         inputGaransi->setSuffix(" bulan");
         form->addRow("Garansi", inputGaransi);
+    } else {
+        inputProteksi = new QSpinBox();
+        inputProteksi->setRange(0, 1000000);
+        inputProteksi->setPrefix("Rp");
+        inputProteksi->setSingleStep(500);
+        form->addRow("Biaya proteksi", inputProteksi);
     }
 
     QDialogButtonBox* tombol = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
@@ -245,10 +276,55 @@ void JendelaUtama::tambahBarang() {
         int kedaluwarsa = inputKedaluwarsa->date().toString("yyyyMMdd").toInt();
         barangBaru = new BarangMakanan(kode, nama, inputHarga->value(), inputStok->value(),
                                        kedaluwarsa);
-    } else {
+    } else if (jenis == "Elektronik") {
         barangBaru = new BarangElektronik(kode, nama, inputHarga->value(), inputStok->value(),
                                           inputGaransi->value());
+    } else {
+        barangBaru = new BarangPecahBelah(kode, nama, inputHarga->value(), inputStok->value(),
+                                          inputProteksi->value());
     }
     QMessageBox::information(this, "Tambah Barang", teks(gudang.tambahBarangBaru(barangBaru)));
     perbaruiTampilan();
+}
+
+void JendelaUtama::hapusBarang() {
+    std::string kode = kodeTerpilih();
+    if (kode.empty()) {
+        return;
+    }
+    QMessageBox::StandardButton konfirmasi = QMessageBox::question(
+        this, "Hapus Barang", teks("Hapus barang dengan kode " + kode + "?\n(Barang hanya bisa dihapus jika stok sudah 0)"),
+        QMessageBox::Yes | QMessageBox::No);
+    if (konfirmasi == QMessageBox::Yes) {
+        std::string hasil = gudang.hapusBarang(kode);
+        if (hasil.rfind("Gagal:", 0) == 0) {
+            QMessageBox::warning(this, "Hapus Barang", teks(hasil));
+        } else {
+            QMessageBox::information(this, "Hapus Barang", teks(hasil));
+            perbaruiTampilan();
+        }
+    }
+}
+
+void JendelaUtama::cariBarangNama() {
+    std::string kata = inputCari->text().trimmed().toStdString();
+    if (kata.empty()) {
+        perbaruiTampilan();
+        return;
+    }
+    std::vector<const Barang*> hasil = gudang.cariBarangNama(kata);
+    tampilkanBarang(hasil);
+    labelRingkasan->setText(teks("Hasil pencarian \"" + kata + "\": " + std::to_string(hasil.size()) + " barang ditemukan."));
+}
+
+void JendelaUtama::filterBerdasarkanJenis() {
+    QString jenis = comboJenis->currentText();
+    if (jenis == "Semua") {
+        perbaruiTampilan();
+        return;
+    }
+    // Overloading: getDaftarBarang dengan parameter string jenis
+    std::vector<const Barang*> hasil = gudang.getDaftarBarang(jenis.toStdString());
+    tampilkanBarang(hasil);
+    labelRingkasan->setText(teks("Filter jenis \"" + jenis.toStdString() + "\": " + std::to_string(hasil.size()) + " barang ditemukan."));
 }

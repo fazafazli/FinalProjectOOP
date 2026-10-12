@@ -98,3 +98,23 @@ string BarangElektronik::getKeterangan() const {
 double BarangElektronik::hitungBiayaPenyimpanan() const {
     return getStok() * getHarga() * 0.01;
 }
+
+// BarangPecahBelah
+BarangPecahBelah::BarangPecahBelah(string kodeBarang, string namaBarang, double hargaBarang,
+                                   int stokAwal, double biayaProteksi)
+    : Barang(kodeBarang, namaBarang, hargaBarang, stokAwal),
+      biayaPengamanan(max(0.0, biayaProteksi)) {
+}
+
+string BarangPecahBelah::getJenis() const {
+    return "Pecah Belah";
+}
+
+string BarangPecahBelah::getKeterangan() const {
+    return "Proteksi: " + formatRupiah(biayaPengamanan) + "/unit";
+}
+
+// Biaya simpan pecah belah: biaya dasar Rp250 + biaya proteksi per unit
+double BarangPecahBelah::hitungBiayaPenyimpanan() const {
+    return getStok() * (250 + biayaPengamanan);
+}

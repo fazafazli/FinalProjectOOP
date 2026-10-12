@@ -131,8 +131,8 @@ void menuStokSedikit(const Gudang& gudang) {
 }
 
 void menuTambahBarang(Gudang& gudang) {
-    cout << "Jenis barang: 1. Umum  2. Makanan  3. Elektronik" << endl;
-    int jenis = bacaPilihan("Pilih jenis: ", 1, 3);
+    cout << "Jenis barang: 1. Umum  2. Makanan  3. Elektronik  4. Pecah Belah" << endl;
+    int jenis = bacaPilihan("Pilih jenis: ", 1, 4);
     string kode = bacaKode("Kode barang (contoh MK-067): ");
     string nama = bacaTeks("Nama barang (maks 25 karakter): ", 25);
     int harga = bacaPilihan("Harga (Rp, tanpa titik): ", 1, 100000000);
@@ -146,9 +146,12 @@ void menuTambahBarang(Gudang& gudang) {
     } else if (jenis == 2) {
         int kedaluwarsa = bacaTanggal("Tanggal kedaluwarsa (YYYYMMDD): ");
         barangBaru = new BarangMakanan(kode, nama, harga, stok, kedaluwarsa);
-    } else {
+    } else if (jenis == 3) {
         int garansi = bacaPilihan("Lama garansi (bulan): ", 0, 120);
         barangBaru = new BarangElektronik(kode, nama, harga, stok, garansi);
+    } else {
+        int proteksi = bacaPilihan("Biaya proteksi/unit (Rp): ", 0, 1000000);
+        barangBaru = new BarangPecahBelah(kode, nama, harga, stok, proteksi);
     }
     cout << gudang.tambahBarangBaru(barangBaru) << endl;
 }
@@ -177,6 +180,36 @@ void menuRiwayat(const Gudang& gudang) {
     }
 }
 
+void menuCariBarang(const Gudang& gudang) {
+    string kata = bacaBaris("Masukkan kata kunci pencarian nama barang: ");
+    cout << endl << "HASIL PENCARIAN DENGAN KATA KUNCI: \"" << kata << "\"" << endl;
+    garis('=');
+    vector<const Barang*> daftar = gudang.cariBarangNama(kata);
+    if (daftar.empty()) {
+        cout << "Tidak ada barang yang cocok." << endl;
+    } else {
+        cetakTabel(gudang, daftar);
+        cout << daftar.size() << " barang ditemukan." << endl;
+    }
+}
+
+// Overloading: getDaftarBarang dengan parameter jenis (string)
+void menuFilterJenis(const Gudang& gudang) {
+    cout << "Pilih jenis barang: 1. Umum  2. Makanan  3. Elektronik  4. Pecah Belah" << endl;
+    int p = bacaPilihan("Pilihan: ", 1, 4);
+    string jenis = (p == 1) ? "Umum" : (p == 2) ? "Makanan" : (p == 3) ? "Elektronik" : "Pecah Belah";
+    cout << endl << "BARANG JENIS " << jenis << endl;
+    garis('=');
+    vector<const Barang*> daftar = gudang.getDaftarBarang(jenis);
+    cetakTabel(gudang, daftar);
+    cout << daftar.size() << " barang ditemukan." << endl;
+}
+
+void menuHapusBarang(Gudang& gudang) {
+    string kode = bacaKode("Masukkan kode barang yang akan dihapus: ");
+    cout << gudang.hapusBarang(kode) << endl;
+}
+
 void tampilkanMenu() {
     cout << endl;
     cout << "[GUDANG MINIMARKET TETITB]" << endl;
@@ -186,6 +219,9 @@ void tampilkanMenu() {
     cout << "4. Barang masuk" << endl;
     cout << "5. Barang keluar" << endl;
     cout << "6. Riwayat barang masuk dan keluar" << endl;
+    cout << "7. Cari barang berdasarkan nama" << endl;
+    cout << "8. Filter barang berdasarkan jenis" << endl;
+    cout << "9. Hapus barang" << endl;
     cout << "0. Keluar" << endl;
     cout << "----------------------------------------" << endl;
 }
@@ -196,7 +232,7 @@ int main() {
 
     while (true) {
         tampilkanMenu();
-        int pilihan = bacaPilihan("Pilih menu: ", 0, 6);
+        int pilihan = bacaPilihan("Pilih menu: ", 0, 9);
         if (pilihan == 0) {
             break;
         }
@@ -208,6 +244,9 @@ int main() {
             case 4: menuBarangMasuk(gudang); break;
             case 5: menuBarangKeluar(gudang); break;
             case 6: menuRiwayat(gudang); break;
+            case 7: menuCariBarang(gudang); break;
+            case 8: menuFilterJenis(gudang); break;
+            case 9: menuHapusBarang(gudang); break;
         }
         tungguEnter();
     }
